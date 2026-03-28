@@ -1,6 +1,7 @@
 import axios from "axios";
 import React, { createContext , useEffect, useState } from "react";
 import { AuthService } from "../main";
+import toast from 'react-hot-toast'
 
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -38,31 +39,53 @@ export const AppContext = createContext<AppContextType | null>(null);
 // ── Provider ─────────────────────────────────────────────────────────────────
 
 const AppContextProvider = ({ children }: { children: React.ReactNode }) => {
-  const [Loading, setLoading] = useState<boolean>(false);
+  const [Loading, setLoading] = useState<boolean>(true);
   const [user, setUser] = useState<User | null>(null);
   const [Location,setLocation]= useState<LocationData | null>(null);
   const [LoadingLocation,setLoadingLocation] = useState<boolean>(false);
   const [City,setCity] = useState<string>('Fetching Location...')
 
 
-  const isAuth = !!user;
+  const token = localStorage.getItem("Quickbite");
+  const isAuth = !!token;
 
-  async function fetchUser() {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem("Quickbite");
-      const { data } = await axios.get(`${AuthService}/api/auth/profile`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setUser(data.user);
-    } catch (error: any) {
-      setUser(null);
-      const message = error?.response?.data?.message ?? "Something went wrong";
-      console.error(message);
-    } finally {
-      setLoading(false);
-    }
+async function fetchUser() {
+  const token = localStorage.getItem("Quickbite");
+
+  if (!token) {
+    setLoading(false);
+    return;
   }
+
+  try {
+    const response = await axios.get(`${AuthService}/api/auth/profile`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    console.log(response);
+
+    setUser(response.data.user);
+  } catch (error: any) {
+    if(error?.response?.status !== 429)
+    {
+      setUser(null);
+    }
+
+    const message = error?.response?.data?.message || "Something went wrong";
+
+    toast(message,{ 
+          style: {
+          borderRadius: '10px',
+          background: '#333',
+          color: '#fff',
+        }
+      }
+    );
+
+  } finally {
+    setLoading(false);
+  }
+}
 
   useEffect(() => {
     fetchUser();

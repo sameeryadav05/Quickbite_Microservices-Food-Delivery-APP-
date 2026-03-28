@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { BrowserRouter, Navigate, Outlet, Route, Routes} from 'react-router-dom'
 import {Toaster} from 'react-hot-toast'
 import useAppContext from './hooks/useAppContext'
@@ -10,18 +10,22 @@ const Login = React.lazy(()=>import('./pages/Login'))
 const SelectRole = React.lazy(()=>import('./pages/SelectRole'))
 
 const PublicRoute = () => {
-  const { isAuth } = useAppContext();
+  const { isAuth, Loading } = useAppContext();
+
+  if (Loading) return <Loader />;
+
   return isAuth ? <Navigate to="/" replace /> : <Outlet />;
 };
 
-// ✅ PrivateRoute — handles role redirect
+
 const PrivateRoute = () => {
   const { isAuth, Loading, user } = useAppContext();
+
   if (Loading) return <Loader />;
+
   if (!isAuth) return <Navigate to="/auth" replace />;
 
-  // logged in but no role → force to /role
-  if (!user?.role && location.pathname !== '/role') {
+  if (user && !user.role && location.pathname !== "/role") {
     return <Navigate to="/role" replace />;
   }
 
@@ -29,7 +33,7 @@ const PrivateRoute = () => {
 };
 
 const App = () => {
-  const { setLoading } = useAppContext();
+
 
   return (
     <>
