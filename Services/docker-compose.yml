@@ -1,0 +1,63 @@
+version: "3.9"
+
+services:
+  redis:
+    image: redis/redis-stack-server:latest
+    container_name: redis-stack
+    ports:
+      - "6379:6379"
+    environment:
+      REDIS_ARGS: "--requirepass Sameer@2005."
+    volumes:
+      - redis-data:/data
+
+  auth-service:
+    build:
+      context: ./Auth
+    container_name: auth-service
+    ports:
+      - "5001:5001"
+    env_file:
+      - ./Auth/.env
+    depends_on:
+      - redis
+    restart: always
+
+  realtime-service:
+    build:
+      context: ./Real_Time
+    container_name: realtime-service
+    ports:
+      - "5001:5001"
+    env_file:
+      - ./Real_Time/.env
+    depends_on:
+      - redis
+    restart: always
+
+  restaurant-service:
+    build:
+      context: ./Restaurant
+    container_name: restaurant-service
+    ports:
+      - "5002:5002"
+    env_file:
+      - ./Restaurant/.env
+    depends_on:
+      - redis
+    restart: always
+
+  rider-service:
+    build:
+      context: ./Rider
+    container_name: rider-service
+    ports:
+      - "5003:5003"
+    env_file:
+      - ./Rider/.env
+    depends_on:
+      - redis
+    restart: always
+
+volumes:
+  redis-data:
